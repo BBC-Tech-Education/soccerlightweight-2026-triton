@@ -7,12 +7,20 @@
 #define FIRST_BYTE 255
 #define SECOND_BYTE 250
 
+#define DEFKP 1.75
+#define DEFKI 0
+#define DEFKD 0.065
+
+#define SPEEDKP 7.5
+#define SPEEDKI 0
+#define SPEEDKD 0.02
+
 #define ROBOT1 true
 
 #if ROBOT1
-    #define IMUKP 2.5 
+    #define IMUKP 2.50
     #define IMUKI 0
-    #define IMUKD 0.11
+    #define IMUKD 0.12
 
 
 #else 

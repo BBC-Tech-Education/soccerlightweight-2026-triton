@@ -51,7 +51,7 @@ void Drive::omnimovement(float direction, float speed, float correction) {
     }
 
     // Scales all motor speeds down if the highest speed is greater than the max speed (255)
-    if(highest > 255.0) {
+    if(highest > 255.0f) {
         for(uint8_t i = 0; i < 4; i++) {
             movementSpeed[i] *= 255.0f / highest;
         }
@@ -61,7 +61,7 @@ void Drive::omnimovement(float direction, float speed, float correction) {
 
     // Gives motors INA, INB, and PWM and gets them to run
     for(uint8_t i = 0; i < 4; i++) {
-        analogWrite(PWMpin[i], abs(movementSpeed[i]));
+        analogWrite(PWMpin[i], round(fabs(movementSpeed[i])));
         digitalWrite(INApin[i], movementSpeed[i] > 0);
         digitalWrite(INBpin[i], movementSpeed[i] < 0);
     }
