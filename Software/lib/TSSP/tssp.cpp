@@ -80,7 +80,7 @@ void TSSP::update() {
 
 
     // Finds the distance between the ball and the robot by averaging the ball strength of the highest TSSP reading and it's neighbours
-    ballStrength = (2 * highest + TSSPStr[(highestSensor + 1) % TSSPNUMBER] + TSSPStr[lower]) / 4.0f;
+    ballStrength = highest;
 
     // Calculates desired movement direction
     if (ballStrength != 0.0f) {

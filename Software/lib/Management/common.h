@@ -5,15 +5,15 @@
 #define CAMERA_RESOLUTION 240
 #define CAMERA_PACKET_SIZE 6
 #define FIRST_BYTE 255
-#define SECOND_BYTE 250
+#define SECOND_BYTE 254
 
 #define DEFKP 1.75
 #define DEFKI 0
 #define DEFKD 0.065
 
-#define SPEEDKP 7.5
+#define SPEEDKP 5.0
 #define SPEEDKI 0
-#define SPEEDKD 0.02
+#define SPEEDKD 0.04
 
 #define ROBOT1 true
 

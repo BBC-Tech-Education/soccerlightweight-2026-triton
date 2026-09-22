@@ -1,58 +1,65 @@
 #include <light.h>
 
 void LSystem::init() {
-    // pinMode(LSOUT1, INPUT);
-    // pinMode(LSOUT2, INPUT);
-    
-    // for(int i = 0; i < 4; i++) {
-    //     pinMode(muxPins[i], OUTPUT);
-    // }
-
-    // for(uint8_t n = 0; n < 16; n++) {
-    //    for(uint8_t i = 0; i < 4; i++) {
-    //         // Calculates mux inputs
-    //         digitalWrite(muxPins[i], ((n >> i) & 1));
-    //     }
-    //     delayMicroseconds(10);
-    //     greenValue[muxPosition[n]] = analogRead(LSOUT1);
-    //     greenValue[muxPosition[n + 16]] = analogRead(LSOUT2);
-    // }
     pinMode(LSOUT1, INPUT);
     pinMode(LSOUT2, INPUT);
-    pinMode(MUX2, INPUT);
-    pinMode(MUX4, INPUT);
-
-
+    
     for(int i = 0; i < 4; i++) {
-        greenReading[i] = analogRead(LSPins[i]);
+        pinMode(muxPins[i], OUTPUT);
+    }
+
+    for(uint8_t n = 0; n < 16; n++) {
+       for(uint8_t i = 0; i < 4; i++) {
+            // Calculates mux inputs
+            digitalWrite(muxPins[i], ((n >> i) & 1));
+        }
+        delayMicroseconds(10);
+        greenValue[muxPosition[n]] = analogRead(LSOUT1);
+        greenValue[muxPosition[n + 16]] = analogRead(LSOUT2);
     }
 }
 
 void LSystem::update() {
     // // Reads phototransistors and orders values into directional order
-    // for(uint8_t n = 0; n < 16; n++) {
-    //     for(uint8_t i = 0; i < 4; i++) {
-    //         // Calculates mux inputs
-    //         digitalWrite(muxPins[i], ((n >> i) & 0x01));
-    //     }
-    //     delayMicroseconds(10);
-    //     lightReading[muxPosition[n]] = analogRead(LSOUT1);
-    //     lightReading[muxPosition[n + 16]] = analogRead(LSOUT2);
-    // }
+    for(uint8_t n = 0; n < 16; n++) {
+        for(uint8_t i = 0; i < 4; i++) {
+            // Calculates mux inputs
+            digitalWrite(muxPins[i], ((n >> i) & 0x01));
+        }
+        delayMicroseconds(10);
+        lightReading[muxPosition[n]] = analogRead(LSOUT1);
+        lightReading[muxPosition[n + 16]] = analogRead(LSOUT2);
+    }
 
-    // // Serial.println("A");
+    // Serial.println("A");
+
+
+    for(uint8_t i = 0; i < 32; i++) {
+        lineDetection[i] = lightReading[i] > (greenValue[i] + error[i]);
+        if(lightReading[i] == 0) {
+            lineDetection[i] = 2;
+        }
+
+        // Serial.print(lineDetection[i+24]);
+        // Serial.print("\t");
+    }
+
+    Serial.println();
+
+    // VECTOR METHOD
+    float ilvector = 0;
+    float jlvector = 0;
+
+    for(int i = 0; i < 32; i++) {
+        if(lineDetection[i] == 1) {
+            ilvector += cos((i * 11.25) * DEG_TO_RAD);
+            jlvector += sin((i * 11.25) * DEG_TO_RAD);
+        }
+    }
     
-    // // Differentiates phototransistor readings between green and white by finding the difference between current reading and original readings for green. If output is 1 it sees white otherwise it is green
-    // // for(uint8_t i = 0; i < LSNUMBER; i++) {
-    // //     lineDetection[i] = lightReading[i] > (greenValue[i] + error[i]);
-    // // }
-
-    // for(int i = 0; i < 2; i++) {
-    //     Serial.print(lightReading[i]);
-    //     Serial.print("\t");
-    // }
-
-    // Serial.println();
+    lineDirection = atan2(jlvector, ilvector) * RAD_TO_DEG;
+    
+    // CLUSTER METHOD (PROLLY NOT)
     
     // // int clusterNumber = -1;
     // // int clusterPosition[4] = {0, 0, 0, 0};
@@ -107,27 +114,10 @@ void LSystem::update() {
     // //         lineDirection = fmod(((clusterAverage[0] + (clusterAverage[3] - 360.0)) / 2.0) + 360, 360.0);
     // //     } 
     // // } 
-    int LSWhite[4];
-    int error[4] = {10, 10, 10, 10};
-
-    for(uint8_t i = 0; i < 4; i++) {
-        LSWhite[i] = (analogRead(LSPins[i]) - greenReading[i] > error[i]);
-        Serial.print(LSWhite[i]);
-        Serial.print("\t");
-    }
-    Serial.println();
-
-    lightDirection = -1;
-
-    for(int n = 0; n < 4; n++) {
-        if(LSWhite[n] != 0) {
-            lightDirection = 90.0 * n;
-        }
-    }
 
     // Serial.println(lightDirection);
 }
 
-float LSystem::get_line_direction() {
-    return lightDirection;
-}
+// float LSystem::get_line_direction() {
+//     return lightDirection;
+// }

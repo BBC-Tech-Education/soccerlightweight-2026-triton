@@ -29,13 +29,13 @@ void setup()
 
   // Compass Setup
 
-  while (!compass.begin(OPERATION_MODE_IMUPLUS))
-  {
-    Serial.println("Ooops, no BNO055 detected ... Check your wiring or I2C ADDR!");
-  }
-  delay(500);
-  compass.setExtCrystalUse(true);
-  delay(500);
+  // while (!compass.begin(OPERATION_MODE_IMUPLUS))
+  // {
+  //   Serial.println("Ooops, no BNO055 detected ... Check your wiring or I2C ADDR!");
+  // }
+  // delay(500);
+  // compass.setExtCrystalUse(true);
+  // delay(500);
 
   Drive System;
   move.init();
@@ -66,19 +66,19 @@ void loop()
   float orbit = tssp.get_orbit_direction(); // fetches the value of the desired movement direction
   float dir = orbit * -1.00;
   float speed = abs(orbitspeedPID.update(ballDir, 0));
-  Serial.println(ballDir);
+  float strength = tssp.get_ball_strength();
 
   if(ballDir < 15.0 || ballDir > -15.0) {
     speed = 240;
   }
 
   // Lights
-  // light.update();
+  light.update();
   // float lineDir = light.get_line_direction();
   // // Serial.println(lineDir);
 
   // defender
   float defenderX = defenderPID.update(ballDir, 0);
 
-  move.omnimovement(dir, speed, correction); // calculates speed and direction for all motors and tells them to run
+  move.omnimovement(dir, 0.0f, correction); // calculates speed and direction for all motors and tells them to run
 }

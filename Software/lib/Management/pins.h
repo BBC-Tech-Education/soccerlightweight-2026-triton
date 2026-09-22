@@ -39,4 +39,6 @@
 #define MUX3 20
 #define MUX4 19
 
+#define cameraSerial Serial4
+
 #define LSNUMBER 32
