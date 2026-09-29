@@ -46,6 +46,10 @@ void setup()  {
   compass.setExtCrystalUse(true);
   delay(500);
 
+
+  // Camera setup
+  cam.init();
+
   // Drive System
   motor.init();
 
@@ -54,9 +58,6 @@ void setup()  {
 
   // LSB setup
   light.init();
-
-  // Camera setup
-  cam.init();
 
   // Soft swtiches
   pinMode(goalSwitch, INPUT);
@@ -79,6 +80,9 @@ void loop() {
 
   // Camera
   cam.update(int(digitalRead(goalSwitch)));
+  float goal = cam.get_goal_angle();
+  // Serial.println(goal);
+  float goalCorrect = attackGoal.update(goal, 95.0f);
 
   // Lights
   light.update();
@@ -139,55 +143,15 @@ void loop() {
       break;
   }
 
-  // digitalWrite(BRINB, HIGH);
-  // digitalWrite(BRINA, LOW);
-  // analogWrite(BRPWM, 100);
-
-  // digitalWrite(FRINB, HIGH);
-  // digitalWrite(FRINA, LOW);
-  // analogWrite(FRPWM, 100);
-  
-
-  // digitalWrite(BLINB, HIGH);
-  // digitalWrite(BLINA, LOW);
-  // analogWrite(BLPWM, 100);
-
-  // digitalWrite(FLINB, HIGH);
-  // digitalWrite(FLINA, LOW);
-  // analogWrite(FLPWM, 100);
-
-
-
-
-
-
-
-
-
-  // digitalWrite(BRINA, HIGH);
-  // digitalWrite(BRINB, LOW);
-  // analogWrite(BRPWM, 100);
-
-  // digitalWrite(FRINA, HIGH);
-  // digitalWrite(FRINB, LOW);
-  // analogWrite(FRPWM, 100);
-  
-
-  // digitalWrite(BLINA, HIGH);
-  // digitalWrite(BLINB, LOW);
-  // analogWrite(BLPWM, 100);
-
-  // digitalWrite(FLINA, HIGH);
-  // digitalWrite(FLINB, LOW);
-  // analogWrite(FLPWM, 100);
-  // dir = -1.00 * tssp.get_orbit_direction()
-
   if(lineDir == 1000.0) {
     speed = abs(orbitspeedPID.update(ballDir, 0));
     dir = -1.00 * tssp.get_orbit_direction();
-    if (ballDir < 20.0 && ballDir > -20.0) {
+    if (ballDir < 25.0 && ballDir > -25.0) {
       dir = 0.0;
       speed = 150.0;
+    } 
+    if(ballDir == 1000.0f) {
+      speed = 0.0;
     }
   } else {
     lineDir += 180;
@@ -200,5 +164,7 @@ void loop() {
     dir = -1.00 * lineDir;
   }
 
-  motor.omnimovement(dir, speed, correction); // calculates speed and direction for all motors and tells them to run
+  Serial.println(dir);
+
+  motor.omnimovement(0.0f, 150.0, correction); // calculates speed and direction for all motors and tells them to run
 }

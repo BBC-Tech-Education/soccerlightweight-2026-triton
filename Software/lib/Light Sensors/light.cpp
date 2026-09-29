@@ -41,7 +41,7 @@ void LSystem::update() {
         }
     }
 
-    Serial.println();
+    // Serial.println();
 
     // VECTOR METHOD
     float ilvector = 0;
@@ -73,7 +73,7 @@ void LSystem::update() {
 
     prevLine = lineDirection;
 
-    Serial.println(lineDirection);
+    // Serial.println(lineDirection);
     
     // CLUSTER METHOD (PROLLY NOT)
     

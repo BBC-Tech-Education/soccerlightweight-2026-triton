@@ -34,11 +34,7 @@ void Drive::omnimovement(float direction, float speed, float correction) {
     
     // If ball is not seen, do not move
     if(direction == 1000) {
-        for(uint8_t i = 0; i < 4; i++) {
-            analogWrite(PWMpin[i], 0);
-            digitalWrite(INApin[i], LOW); 
-            digitalWrite(INBpin[i], LOW);
-        }
+        speed = 0.0f;
     }
 
     // Calculates individual motor speeds using the parameters

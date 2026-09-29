@@ -16,7 +16,7 @@
 #define DEFYKI 0
 #define DEFYKD 0.065
 
-#define ATTKP 0
+#define ATTKP 0.5
 #define ATTKI 0
 #define ATTKD 0
 
@@ -24,7 +24,7 @@
 #define DEFKI 0
 #define DEFKD 0
 
-#define SPEEDKP 2.0
+#define SPEEDKP 1.5
 #define SPEEDKI 0
 #define SPEEDKD 0.04
 

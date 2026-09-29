@@ -38,8 +38,8 @@
 #define MUX3 20
 #define MUX4 19
 
-#define goalSwitch 0
-#define stateSwitch 40
+#define goalSwitch 40
+#define stateSwitch 0
 
 #define cameraSerial Serial4
 

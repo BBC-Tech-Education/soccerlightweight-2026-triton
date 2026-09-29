@@ -31,6 +31,7 @@ void TSSP::update() {
     TSSPStr[1] = -2;
     TSSPStr[8] = -2;
     TSSPStr[13] = -2;
+    TSSPStr[15] = -2;
 
     // Calculates approx. values for broken TSSPs by averaging the neighbouring TSSP's strength values
     for (uint8_t i = 0; i < TSSPNUMBER; i++) {
