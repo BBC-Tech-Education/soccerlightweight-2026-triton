@@ -39,9 +39,6 @@ void LSystem::update() {
         if(lightReading[i] == 0) {
             lineDetection[i] = 2;
         }
-
-        // Serial.print(lineDetection[i+24]);
-        // Serial.print("\t");
     }
 
     Serial.println();
@@ -56,8 +53,27 @@ void LSystem::update() {
             jlvector += sin((i * 11.25) * DEG_TO_RAD);
         }
     }
-    
+ 
     lineDirection = atan2(jlvector, ilvector) * RAD_TO_DEG;
+
+    if(ilvector == 0.0 && jlvector == 0.0) {
+        lineDirection = 1000.0;
+        if(remember == 1 && prevLine != 1000.0) {
+            lineDirection = prevLine;
+            remember = 1;
+        }
+    } else { 
+        lineDirection = atan2(jlvector, ilvector) * RAD_TO_DEG; 
+        remember = 0;       
+        if(abs(lineDirection - prevLine) > 50 && prevLine != 1000.0) {
+            lineDirection = prevLine;
+            remember = 1;
+        }
+    }
+
+    prevLine = lineDirection;
+
+    Serial.println(lineDirection);
     
     // CLUSTER METHOD (PROLLY NOT)
     
@@ -118,6 +134,6 @@ void LSystem::update() {
     // Serial.println(lightDirection);
 }
 
-// float LSystem::get_line_direction() {
-//     return lightDirection;
-// }
+float LSystem::get_line_direction() {
+    return lineDirection;
+}

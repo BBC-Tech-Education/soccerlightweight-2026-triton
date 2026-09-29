@@ -5,40 +5,49 @@
 #include <light.h>
 #include <tssp.h>
 #include <drive.h>
+#include <camera.h>
 
-Drive move;
+Drive motor;
 sensors_event_t gyro;
 PID compassPID(IMUKP, IMUKI, IMUKD);
-PID defenderPID(DEFKP, DEFKI, DEFKD);
+PID attackGoal(ATTKP, ATTKI, ATTKD);
 PID orbitspeedPID(SPEEDKP, SPEEDKI, SPEEDKD);
+PID defenderHori(DEFXKP, DEFXKI, DEFXKD);
+PID defenderVert(DEFYKP, DEFYKI, DEFYKD);
+PID defendGoal(DEFKP, DEFKI, DEFKD);
 LSystem light;
 TSSP tssp;
 Adafruit_BNO055 compass = Adafruit_BNO055(55, BNO055_ADDRESS_B, &Wire2);
+Camera cam;
 
-// enum FSMStates {
-//   STATE_IDLE,
-//   STATE_ATTACK,
-//   STATE_DEFEND,
-//   STATE_LINE_AVOID
-// }
+enum logicStates {
+  STATE_IDLE,
+  STATE_ATTACK,
+  STATE_DEFEND,
+  STATE_LINE_AVOID
+};
 
-// FSMStates initbehaviour = STATE_ATTACK;
+enum subStates {
+  ATTACK_SURGE,
+  ATTACK_ORBIT,
+  LINE_AVOID,
+  LINE_REMEMBER,
+  DEFEND_FORWARD,
+  DEFEND_BEHIND
+};
 
-void setup()
-{
-
+void setup()  {
   // Compass Setup
+  while (!compass.begin(OPERATION_MODE_IMUPLUS))
+  {
+    Serial.println("Ooops, no BNO055 detected ... Check your wiring or I2C ADDR!");
+  }
+  delay(500);
+  compass.setExtCrystalUse(true);
+  delay(500);
 
-  // while (!compass.begin(OPERATION_MODE_IMUPLUS))
-  // {
-  //   Serial.println("Ooops, no BNO055 detected ... Check your wiring or I2C ADDR!");
-  // }
-  // delay(500);
-  // compass.setExtCrystalUse(true);
-  // delay(500);
-
-  Drive System;
-  move.init();
+  // Drive System
+  motor.init();
 
   // TSSP Setup
   tssp.init();
@@ -46,39 +55,150 @@ void setup()
   // LSB setup
   light.init();
 
-  Serial.println("abhis gay");
+  // Camera setup
+  cam.init();
+
+  // Soft swtiches
+  pinMode(goalSwitch, INPUT);
+  pinMode(stateSwitch, INPUT);
 }
 
 float speed;
 float dir;
 
-void loop()
-{
+void loop() {
   // Correction
-  compass.getEvent(&gyro);                                                                        // reads compass
+  compass.getEvent(&gyro);  // reads compass
   float heading = gyro.orientation.x > 180.0f ? gyro.orientation.x - 360.0f : gyro.orientation.x; // converts reading from 0 - 360 to -180 to 180 in order to orientate values around the front of the robot for correction
-  float correction = compassPID.update(heading, 0.0f);                                            // PID function that calculates a value to be added onto the directional movement component of the motor values in order to keep robot straight
+  float correction = compassPID.update(heading, 0.0f);  // PID function that calculates a value to be added onto the directional movement component of the motor values in order to keep robot straight
   // Serial.println(heading);
 
-  // // TSSP
+  // TSSP
   tssp.update(); // reads TSSP plus does some calcs
   float ballDir = tssp.get_ball_direction();
-  float orbit = tssp.get_orbit_direction(); // fetches the value of the desired movement direction
-  float dir = orbit * -1.00;
-  float speed = abs(orbitspeedPID.update(ballDir, 0));
-  float strength = tssp.get_ball_strength();
 
-  if(ballDir < 15.0 || ballDir > -15.0) {
-    speed = 240;
-  }
+  // Camera
+  cam.update(int(digitalRead(goalSwitch)));
 
   // Lights
   light.update();
-  // float lineDir = light.get_line_direction();
-  // // Serial.println(lineDir);
+  float lineDir = light.get_line_direction();
+  // Serial.println(lineDir);
 
-  // defender
-  float defenderX = defenderPID.update(ballDir, 0);
+  logicStates currentState = STATE_IDLE;
+  subStates currentSubState = ATTACK_SURGE;
 
-  move.omnimovement(dir, 0.0f, correction); // calculates speed and direction for all motors and tells them to run
+  // state logic
+  if(ballDir == 1000.0f) {
+    currentState = STATE_IDLE;
+  } else if(digitalRead(stateSwitch)) { // ADD SOMETHING FOR BLUETOOTH MODULE
+    currentState = STATE_ATTACK;
+    if(ballDir < 15.0 && ballDir > -15.0) { 
+      currentSubState = ATTACK_SURGE;
+    } else {currentSubState = ATTACK_ORBIT;}
+  } else {
+    currentState = STATE_DEFEND;
+    if(ballDir > -90.0 && ballDir < 90.0) {
+      currentSubState = DEFEND_FORWARD;
+    } else {currentSubState =  DEFEND_BEHIND;}
+  } if(lineDir != -1.00) {
+    currentState = STATE_LINE_AVOID; //ADD LINE REMEMBERANCE
+  }
+
+  switch (currentState) {
+    case STATE_IDLE:
+      speed = 0.0f;
+      break;
+    case STATE_ATTACK:
+      switch(currentSubState) {
+        case ATTACK_ORBIT:
+          dir = -1.00 * tssp.get_orbit_direction();
+          speed = abs(orbitspeedPID.update(ballDir, 0));
+          break;
+        case ATTACK_SURGE:
+          dir = 0.0f;
+          speed = 240.0f;
+          break;
+      }
+      break;
+    case STATE_DEFEND:
+      switch(currentSubState) {
+        case DEFEND_FORWARD:
+          dir = atan2(defenderVert.update(ballDir, 0), defenderHori.update(ballDir, 0));
+          speed = sqrt(defenderHori.update(ballDir, 0) * defenderHori.update(ballDir, 0) + defenderVert.update(ballDir, 0) * defenderVert.update(ballDir, 0));
+          break;
+        case DEFEND_BEHIND:
+          dir = -1.00 * tssp.get_orbit_direction();
+          speed = abs(orbitspeedPID.update(ballDir, 0));
+          break;
+      }
+    break;
+    case STATE_LINE_AVOID:
+      dir = lineDir;
+      speed = 255.0f;
+      break;
+  }
+
+  // digitalWrite(BRINB, HIGH);
+  // digitalWrite(BRINA, LOW);
+  // analogWrite(BRPWM, 100);
+
+  // digitalWrite(FRINB, HIGH);
+  // digitalWrite(FRINA, LOW);
+  // analogWrite(FRPWM, 100);
+  
+
+  // digitalWrite(BLINB, HIGH);
+  // digitalWrite(BLINA, LOW);
+  // analogWrite(BLPWM, 100);
+
+  // digitalWrite(FLINB, HIGH);
+  // digitalWrite(FLINA, LOW);
+  // analogWrite(FLPWM, 100);
+
+
+
+
+
+
+
+
+
+  // digitalWrite(BRINA, HIGH);
+  // digitalWrite(BRINB, LOW);
+  // analogWrite(BRPWM, 100);
+
+  // digitalWrite(FRINA, HIGH);
+  // digitalWrite(FRINB, LOW);
+  // analogWrite(FRPWM, 100);
+  
+
+  // digitalWrite(BLINA, HIGH);
+  // digitalWrite(BLINB, LOW);
+  // analogWrite(BLPWM, 100);
+
+  // digitalWrite(FLINA, HIGH);
+  // digitalWrite(FLINB, LOW);
+  // analogWrite(FLPWM, 100);
+  // dir = -1.00 * tssp.get_orbit_direction()
+
+  if(lineDir == 1000.0) {
+    speed = abs(orbitspeedPID.update(ballDir, 0));
+    dir = -1.00 * tssp.get_orbit_direction();
+    if (ballDir < 20.0 && ballDir > -20.0) {
+      dir = 0.0;
+      speed = 150.0;
+    }
+  } else {
+    lineDir += 180;
+    if (lineDir > 180) {
+      lineDir -= 360;
+   } else if (lineDir < -180) {
+      lineDir += 360;
+    }
+    speed = 240.0;
+    dir = -1.00 * lineDir;
+  }
+
+  motor.omnimovement(dir, speed, correction); // calculates speed and direction for all motors and tells them to run
 }

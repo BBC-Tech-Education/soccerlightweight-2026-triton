@@ -28,10 +28,9 @@ void TSSP::update() {
         current_time = millis();
     }
 
-    // Sets broken TSSPs to zero
-     
-    TSSPStr[10] = -2;
-    TSSPStr[15] = -2;
+    TSSPStr[1] = -2;
+    TSSPStr[8] = -2;
+    TSSPStr[13] = -2;
 
     // Calculates approx. values for broken TSSPs by averaging the neighbouring TSSP's strength values
     for (uint8_t i = 0; i < TSSPNUMBER; i++) {
@@ -43,16 +42,13 @@ void TSSP::update() {
     }
     
     // Prints all values
-
     // for (uint8_t i = 0; i < TSSPNUMBER; i++) {
     //     Serial.print(TSSPStr[i]);
     //     Serial.print("     ");
     // }
-
     // Serial.println();
 
     // Converts each angular strength component into perpendicular i and j vectors using trig
-    
     float iVector[TSSPNUMBER];
     float jVector[TSSPNUMBER];
     uint16_t highest = 0;
@@ -67,9 +63,7 @@ void TSSP::update() {
         }
     }
 
-
     // Calculates the total horizontal and vertical TSSP strength components by adding the components of the highest TSSP reading and the one's next to it
-
     uint8_t lower = highestSensor == 0 ? 15 : (highestSensor - 1) % TSSPNUMBER;
     float i = (iVector[highestSensor] + iVector[(highestSensor + 1) % TSSPNUMBER] + iVector[lower]);
     float j = (jVector[highestSensor] + jVector[(highestSensor + 1) % TSSPNUMBER] + jVector[lower]);
@@ -77,9 +71,7 @@ void TSSP::update() {
     // Uses trig to find a final ball direction
     ballDirection = atan2f(j, i) * RAD_TO_DEG;
 
-
-
-    // Finds the distance between the ball and the robot by averaging the ball strength of the highest TSSP reading and it's neighbours
+    // Find ballstrength
     ballStrength = highest;
 
     // Calculates desired movement direction
@@ -93,21 +85,16 @@ void TSSP::update() {
         if (orbitDirection < 0.0f) {
             orbitDirection += 360.0f;
         }
-        // Calculates movement speed in order ot minimising overshooting
+        // Calculates movement s5peed in order ot minimising overshooting
         orbitSpeed = 60.0f + (90.0f - fabs(orbitadd)) / 3.0f;
+
+        // MODS IT
+        orbitDirection = fmod((360.0f - orbitDirection), 360.0f);
     } else {
         // Tells robot not to move if no ball
-        orbitDirection = 1000.0;
+        ballDirection = 1000.0;
         orbitSpeed = 0.0;
     }
-
-    // Tells robot to ignore direction movement and just move forward if the ball is between 30 and -30 degrees
-    // if(ballDirection < 40 && ballDirection > -) {
-    //     orbitDirection = 0;
-    // }
-
-    // MODS IT
-    orbitDirection = fmod((360.0f - orbitDirection), 360.0f);
 }
 
 float TSSP::get_ball_direction() {

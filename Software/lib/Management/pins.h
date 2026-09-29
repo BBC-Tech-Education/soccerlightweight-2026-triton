@@ -33,11 +33,13 @@
 #define LSOUT1 23
 #define LSOUT2 18
 
-
 #define MUX1 22
 #define MUX2 21
 #define MUX3 20
 #define MUX4 19
+
+#define goalSwitch 0
+#define stateSwitch 40
 
 #define cameraSerial Serial4
 
